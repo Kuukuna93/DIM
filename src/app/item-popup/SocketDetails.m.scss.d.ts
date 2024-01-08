@@ -5,8 +5,10 @@ interface CssExports {
   'clickableMod': string;
   'energyElement': string;
   'header': string;
+  'itemPickerSearch': string;
   'modList': string;
   'notUnlocked': string;
+  'ornamentPreview': string;
   'selected': string;
   'socketDetailsSheet': string;
 }

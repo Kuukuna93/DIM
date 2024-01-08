@@ -1,6 +1,6 @@
 import { D2ManifestDefinitions } from 'app/destiny2/d2-definitions';
 import { languageSelector } from 'app/dim-api/selectors';
-import BungieImage from 'app/dim-ui/BungieImage';
+import BungieImage, { bungieNetPath } from 'app/dim-ui/BungieImage';
 import { EnergyCostIcon } from 'app/dim-ui/ElementIcon';
 import Sheet from 'app/dim-ui/Sheet';
 import { t } from 'app/i18next-t';
@@ -15,8 +15,9 @@ import { useD2Definitions } from 'app/manifest/selectors';
 import { unlockedItemsForCharacterOrProfilePlugSet } from 'app/records/plugset-helpers';
 import { collectionsVisibleShadersSelector } from 'app/records/selectors';
 import { SearchInput } from 'app/search/SearchInput';
-import { weaponMasterworkY2SocketTypeHash } from 'app/search/d2-known-values';
+import { DEFAULT_ORNAMENTS, weaponMasterworkY2SocketTypeHash } from 'app/search/d2-known-values';
 import { createPlugSearchPredicate } from 'app/search/plug-search';
+import { useIsPhonePortrait } from 'app/shell/selectors';
 import { chainComparator, compareBy, reverseComparator } from 'app/utils/comparators';
 import { emptySet } from 'app/utils/empty';
 import { DestinyProfileResponse, PlugUiStyles, SocketPlugSources } from 'bungie-api-ts/destiny2';
@@ -271,6 +272,11 @@ export default function SocketDetails({
     (socket.emptyPlugItemHash && defs.InventoryItem.get(socket.emptyPlugItemHash)) ||
     socket.plugged?.plugDef;
 
+  const isPhonePortrait = useIsPhonePortrait();
+  const itemDef = defs.InventoryItem.get(item.hash);
+  const screenshot = selectedPlug?.screenshot || itemDef.screenshot;
+  const initialPlugHash = socket.socketDefinition.singleInitialItemHash;
+
   const header = (
     <div>
       <h1 className={styles.header}>
@@ -284,14 +290,7 @@ export default function SocketDetails({
         {requiresEnergy && <EnergyCostIcon className={styles.energyElement} />}
         <div>{socketCategory.displayProperties.name}</div>
       </h1>
-      <div className="item-picker-search">
-        <SearchInput
-          query={query}
-          onQueryChanged={setQuery}
-          placeholder={t('Sockets.Search')}
-          autoFocus
-        />
-      </div>
+      <div />
     </div>
   );
 
@@ -319,6 +318,34 @@ export default function SocketDetails({
       footer={footer}
       sheetClassName={styles.socketDetailsSheet}
     >
+      {
+        /**
+         * Determines if the socket is an ornament and only shows the preview if true.
+         * Same logic as is used in SocketDetailsSelectedPlug.uiCatetogizeSocket.
+         */
+        Boolean(initialPlugHash) && DEFAULT_ORNAMENTS.includes(initialPlugHash) && (
+          <div
+            className={clsx(styles.ornamentPreview, 'ornamentPreview')}
+            style={
+              screenshot && !isPhonePortrait
+                ? {
+                    backgroundImage: `linear-gradient(180deg, rgba(0,0,0,1) 0px, rgba(0,0,0,0) 100px), linear-gradient(180deg, rgba(0,0,0,0) 400px, rgba(0,0,0,1) 500px), url("${bungieNetPath(
+                      screenshot,
+                    )}")`,
+                  }
+                : undefined
+            }
+          />
+        )
+      }
+      <div className={clsx(styles.itemPickerSearch, 'itemPickerSearch')}>
+        <SearchInput
+          query={query}
+          onQueryChanged={setQuery}
+          placeholder={t('Sockets.Search')}
+          autoFocus
+        />
+      </div>
       <div className={clsx('sub-bucket', styles.modList)}>
         {mods.map((mod) => (
           <SocketDetailsMod
